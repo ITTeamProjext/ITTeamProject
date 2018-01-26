@@ -24,8 +24,8 @@ public class TopTrumpsCLIApplication {
 		while (!userWantsToQuit) {
 			System.out.println("How many AI players do you want to play with? (Max:4)");
 			Scanner scanner = new Scanner(System.in);
-			int numPlayers=scanner.nextInt()+1;
-			Game game = new Game();
+			int numPlayer=scanner.nextInt()+1; //AIs and player
+			Game game = new Game(numPlayer);
 			
 			// ----------------------------------------------------
 			// Add your game logic here based on the requirements

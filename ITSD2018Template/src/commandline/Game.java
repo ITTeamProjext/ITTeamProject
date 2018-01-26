@@ -6,10 +6,13 @@ import java.util.*;
 public class Game {
 	
 	private Cards [] cards;
-	
-	public Game() {
+	private Players [] player;
+	private final int max = 40;
+	int index=0;
+	public Game(int numPlayer) {
 		
-		cards=new Cards[40];
+		cards=new Cards[max];
+		player=new Players[numPlayer];
 		loadCards();
 	}
 	public void loadCards() {
@@ -52,7 +55,34 @@ public class Game {
 	      cards[index] = cards[i];
 	      cards[i] = temp;
 	    }
-		
+		divideCards();
 	}
+	
+	public void divideCards() {
+		int cardnum = max / player.length;
+		int cardLeft = max % player.length;
+		System.out.println("每人平均"+cardnum+",多出"+cardLeft+"張給前幾位!");
+		for(int i=0;i<player.length;i++) {
+			String playerName = "Player"+(i+1);
+			if(cardLeft != 0){
+			    cardnum = (max / player.length) + 1;
+			    cardLeft--;
+			   }else{
+			    cardnum = (max / player.length);
+			   }
+			   player[i] = new Players(playerName, cardnum);
+			   setPlayerCard(player[i], cardnum);
+				    player[i].showMyCards();
+		}
+		  
+		  
+	}
+	 public void setPlayerCard(Players player, int cardNum){
+		  for(int i = 0 ; i < cardNum ; i++){
+		   player.setMyCards(i, cards[index++]);
+
+		   }
+		  
+	 }
 	
 }
