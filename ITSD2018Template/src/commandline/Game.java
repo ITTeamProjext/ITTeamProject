@@ -12,16 +12,19 @@ import java.io.IOException;
 public class Game {
 	private Cards[] cards;
 	private Players[] player;
+	private Statistics statistics;
 	private final int max = 40;
 	int index = 0;
 	int k = 0;// number of winner
 	int round = 0;
+	int draw=0;
 	// create communal pile
 	ArrayList<Cards> communalPile = new ArrayList<>();
 
 	public Game(int numPlayer) {
 		cards = new Cards[max];
 		player = new Players[numPlayer];
+		statistics = new Statistics(numPlayer);
 		loadCards();
 
 		// randomly select the player to start the game
@@ -33,11 +36,15 @@ public class Game {
 		int playerNumber = player.length;
 		// while there is more than 1 player
 		while (playerNumber > 1) {
+			int thRound=round+1;
+			System.out.print("\r\nRound "+thRound+"!");
 			showTop(player[k]);
+			
+		    //show everyone's number of cards
 			System.out.print("Cards left:");
 			for(int i=0;i<player.length;i++) {
-				
-				System.out.print(player[i].myCards.length+" ");
+				if(player[i].myCards.length!=0)
+					System.out.print(player[i].getName()+"["+player[i].myCards.length+"] ");
 			}
 			System.out.println();
 			
@@ -46,11 +53,11 @@ public class Game {
 
 				// run compare
 				rules(selectCategory());
-				winner = getWinner(k).getName();
-
+				winner = player[k].getName();
+				statistics.setPlayerWinRound(k);
 				// print winner
-				int roundth=round+1;
-				System.out.println("Winner of this round: " +"("+roundth+"th): "+ winner);
+				
+				System.out.println("Winner of this round: "+ winner);
 				round++;
 			}
 
@@ -86,12 +93,13 @@ public class Game {
 				} else {
 					category = "Cargo";
 				}
+				System.out.println(player[k].getName()+" chooses "+category);
 				rules(category);
-				winner = getWinner(k).getName();
-
+				winner = player[k].getName();
+				statistics.setPlayerWinRound(k);
 				// print winner
-				int roundth=round+1;
-				System.out.println("Winner of this round "+"("+roundth+"th): " + winner);
+				
+				System.out.println("Winner of this round: " + winner);
 
 				
 				round++;
@@ -105,7 +113,12 @@ public class Game {
 				}
 			}
 		}
-		System.out.println("\r\nThe winner is " + getWinner(k).getName());
+		
+		statistics.setGameRound(round);
+		statistics.setDraw(draw);
+		statistics.setWinner(player[k].getName());
+		
+		System.out.println("\r\nThe winner is " + player[k].getName());
 		System.out.println("\r\nIt takes " + round + "rounds to finish the game");
 	}
 
@@ -116,28 +129,27 @@ public class Game {
 				+ winner.myCards[0].getSize() + " Speed: " + winner.myCards[0].getSpeed() + " Range: "
 				+ winner.myCards[0].getRange() + " Firepower: " + winner.myCards[0].getFirepower() + " Cargo: "
 				+ winner.myCards[0].getCargo());
+		
 	}
 
 	// select category to compare
 	public String selectCategory() {
 		System.out.println("\r\nWhich category do you want to choose?");
 		Scanner scanner1 = new Scanner(System.in);
-		String category = scanner1.next().trim();
+		String category = scanner1.next();
 
 		// loop until have a valid category
 		while (!(category.equals("Size") || category.equals("Speed") || category.equals("Range")
 				|| category.equals("Firepower") || category.equals("Cargo"))) {
 			System.out.println("\r\nInvalid category. Please choose the category you want again?");
 			Scanner scanner2 = new Scanner(System.in);
-			category = scanner2.next().trim();
+			category = scanner2.next();
 		}
 		return category;
 	}
 
-	// return winner
-	public Players getWinner(int k) {
-		return player[k];
-	}
+
+	
 
 	// choose the category to compare
 	public void rules(String category) throws ArrayIndexOutOfBoundsException {
@@ -148,26 +160,31 @@ public class Game {
 			// boolean flag
 			boolean flag = true;
 			int largest = 0;
-			int num = player[0].myCards[0].getSize();
+			int num = player[k].myCards[0].getSize();
 			int same = 0;
 
 			// get the name and the largest size
 			outterLoop: for (int i = 0; i < player.length; i++) {
-				if(player[i].myCards!=null) {
+				if(player[i].myCards.length!=0) {
 					// get the largest
 					for (int j = i + 1; j < player.length; j++) {
-						if (num < player[j].myCards[0].getSize()) {
-							num = player[j].myCards[0].getSize();
-							same = j;
+						if(player[j].myCards.length!=0) {
+							if (num <= player[j].myCards[0].getSize()) {
+								num = player[j].myCards[0].getSize();
+								same = j;
+							}
 						}
 					}
 
 					// then check draw
 					for (int j = i + 1; j < player.length; j++) {
-						if (player[j].myCards[0].getSize() == num && j != same) {
-							System.out.println("We have a draw here.");
-							flag = false;
-							break outterLoop;
+						if(player[j].myCards.length!=0) { 
+							if (player[j].myCards[0].getSize() == num && j != same) {
+								System.out.println("We have a draw here.");
+								flag = false;
+								draw++;
+								break outterLoop;
+							}
 						}
 					}
 				}
@@ -176,7 +193,7 @@ public class Game {
 			if (flag) {
 				// run compare
 				for (int i = 0; i < player.length; i++) {
-					if(player[i].myCards!=null) {
+					if(player[i].myCards.length!=0) {
 						int n = player[i].myCards[0].getSize();
 						// get larger number
 						if (n > largest) {
@@ -201,26 +218,31 @@ public class Game {
 			// boolean flag
 			boolean flag = true;
 			int largest = 0;
-			int num = player[0].myCards[0].getSpeed();
+			int num = player[k].myCards[0].getSpeed();
 			int same = 0;
 
 			// get the name and the largest speed
 			outterLoop: for (int i = 0; i < player.length; i++) {
-				if(player[i].myCards!=null) {
+				if(player[i].myCards.length!=0) {
 					// get the largest
 					for (int j = i + 1; j < player.length; j++) {
-						if (num < player[j].myCards[0].getSpeed()) {
-							num = player[j].myCards[0].getSpeed();
-							same = j;
+						if(player[j].myCards.length!=0) {
+							if (num <= player[j].myCards[0].getSpeed()) {
+								num = player[j].myCards[0].getSpeed();
+								same = j;
+							}
 						}
 					}
 	
 					// then check draw
 					for (int j = i + 1; j < player.length; j++) {
-						if (player[j].myCards[0].getSpeed() == num && j != same) {
-							System.out.println("We have a draw here.");
-							flag = false;
-							break outterLoop;
+						if(player[j].myCards.length!=0) {
+							if (player[j].myCards[0].getSpeed() == num && j != same) {
+								System.out.println("We have a draw here.");
+								flag = false;
+								draw++;
+								break outterLoop;
+							}
 						}
 					}
 				}
@@ -229,7 +251,7 @@ public class Game {
 			if (flag) {
 				// run compare
 				for (int i = 0; i < player.length; i++) {
-					if(player[i].myCards!=null) {
+					if(player[i].myCards.length!=0) {
 						int n = player[i].myCards[0].getSpeed();
 						// get larger number
 						if (n > largest) {
@@ -254,26 +276,31 @@ public class Game {
 			// boolean flag
 			boolean flag = true;
 			int largest = 0;
-			int num = player[0].myCards[0].getRange();
+			int num = player[k].myCards[0].getRange();
 			int same = 0;
 
 			// get the name and the largest range
 			outterLoop: for (int i = 0; i < player.length; i++) {
-				if(player[i].myCards!=null) {
+				if(player[i].myCards.length!=0) {
 					// get the largest
 					for (int j = i + 1; j < player.length; j++) {
-						if (num < player[j].myCards[0].getRange()) {
-							num = player[j].myCards[0].getRange();
-							same = j;
+						if(player[j].myCards.length!=0) {
+							if (num <= player[j].myCards[0].getRange()) {
+								num = player[j].myCards[0].getRange();
+								same = j;
+							}
 						}
 					}
 	
 					// then check draw
 					for (int j = i + 1; j < player.length; j++) {
-						if (player[j].myCards[0].getRange() == num && j != same) {
-							System.out.println("We have a draw here.");
-							flag = false;
-							break outterLoop;
+						if(player[j].myCards.length!=0) {
+							if (player[j].myCards[0].getRange() == num && j != same) {
+								System.out.println("We have a draw here.");
+								flag = false;
+								draw++;
+								break outterLoop;
+							}
 						}
 					}
 				}
@@ -282,7 +309,7 @@ public class Game {
 			if (flag) {
 				// run compare
 				for (int i = 0; i < player.length; i++) {
-					if(player[i].myCards!=null) {
+					if(player[i].myCards.length!=0) {
 						int n = player[i].myCards[0].getRange();
 						// get larger number
 						if (n > largest) {
@@ -307,26 +334,31 @@ public class Game {
 			// boolean flag
 			boolean flag = true;
 			int largest = 0;
-			int num = player[0].myCards[0].getFirepower();
+			int num = player[k].myCards[0].getFirepower();
 			int same = 0;
 
 			// get the name and the largest fire power
 			outterLoop: for (int i = 0; i < player.length; i++) {
-				if(player[i].myCards!=null) {
+				if(player[i].myCards.length!=0) {
 					// get the largest
 					for (int j = i + 1; j < player.length; j++) {
-						if (num < player[j].myCards[0].getFirepower()) {
-							num = player[j].myCards[0].getFirepower();
-							same = j;
+						if(player[j].myCards.length!=0) {
+							if (num <= player[j].myCards[0].getFirepower()) {
+								num = player[j].myCards[0].getFirepower();
+								same = j;
+							}
 						}
 					}
 	
 					// then check draw
 					for (int j = i + 1; j < player.length; j++) {
-						if (player[j].myCards[0].getFirepower() == num && j != same) {
-							System.out.println("We have a draw here.");
-							flag = false;
-							break outterLoop;
+						if(player[j].myCards.length!=0) {
+							if (player[j].myCards[0].getFirepower() == num && j != same) {
+								System.out.println("We have a draw here.");
+								flag = false;
+								draw++;
+								break outterLoop;
+							}
 						}
 					}
 				}
@@ -335,7 +367,7 @@ public class Game {
 			if (flag) {
 				// run compare
 				for (int i = 0; i < player.length; i++) {
-					if(player[i].myCards!=null) {
+					if(player[i].myCards.length!=0) {
 						int n = player[i].myCards[0].getFirepower();
 						// get larger number
 						if (n > largest) {
@@ -360,26 +392,31 @@ public class Game {
 			// boolean flag
 			boolean flag = true;
 			int largest = 0;
-			int num = player[0].myCards[0].getCargo();
+			int num = player[k].myCards[0].getCargo();
 			int same = 0;
 
 			// get the name and the largest cargo
 			outterLoop: for (int i = 0; i < player.length; i++) {
-				if(player[i].myCards!=null) {
+				if(player[i].myCards.length!=0) {
 					// get the largest
 					for (int j = i + 1; j < player.length; j++) {
-						if (num < player[j].myCards[0].getCargo()) {
-							num = player[j].myCards[0].getCargo();
-							same = j;
+						if(player[j].myCards.length!=0) {
+							if (num <= player[j].myCards[0].getCargo()) {
+								num = player[j].myCards[0].getCargo();
+								same = j;
+							}
 						}
 					}
 	
 					// then check draw
 					for (int j = i + 1; j < player.length; j++) {
-						if (player[j].myCards[0].getCargo() == num && j != same) {
-							System.out.println("We have a draw here.");
-							flag = false;
-							break outterLoop;
+						if(player[j].myCards.length!=0) {
+							if (player[j].myCards[0].getCargo() == num && j != same) {
+								System.out.println("We have a draw here.");
+								flag = false;
+								draw++;
+								break outterLoop;
+							}
 						}
 					}
 				}
@@ -388,7 +425,7 @@ public class Game {
 			if (flag = true) {
 				// run compare
 				for (int i = 0; i < player.length; i++) {
-					if(player[i].myCards!=null) {
+					if(player[i].myCards.length!=0) {
 						int n = player[i].myCards[0].getCargo();
 	
 						// get larger number
@@ -413,7 +450,7 @@ public class Game {
 
 	public void communalPile() {
 		for (int i = 0; i < player.length; i++) {
-			if(player[i].myCards!=null) {
+			if(player[i].myCards.length!=0) {
 			// put cards in communal pile
 			communalPile.add(player[i].myCards[0]);
 			player[i].myCards = ArrayUtils.remove(player[i].myCards, 0);
